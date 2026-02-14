@@ -2,6 +2,8 @@
 
 **WordOps Panel** is a lightweight, modern web interface for [WordOps](https://wordops.net/), designed to simplify WordPress server management. Built with **FastAPI**, **HTMX**, and **Tailwind CSS**, it provides a streamlined dashboard for deploying sites, managing assets, and handling server administration without touching the command line.
 
+<img width="1876" height="1453" alt="image" src="https://github.com/user-attachments/assets/454d79e7-fe23-421d-bbc6-8ca62e0278c3" />
+
 ---
 
 ## ✨ Key Features
