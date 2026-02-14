@@ -121,7 +121,7 @@ To run WordPanel locally for development without building the package:
 
 1. **Clone & Setup:**
 ```bash
-git clone https://github.com/yourusername/wordpanel.git
+git clone https://github.com/qrussell/wordpanel.git
 cd wordpanel
 python3 -m venv venv
 source venv/bin/activate
