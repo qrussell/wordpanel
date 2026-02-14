@@ -1,52 +1,152 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WordPanel Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        // We define 'primary' to map to CSS variables
+                        primary: {
+                            50: 'var(--color-primary-50)',
+                            100: 'var(--color-primary-100)',
+                            500: 'var(--color-primary-500)',
+                            600: 'var(--color-primary-600)',
+                            700: 'var(--color-primary-700)',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
         [x-cloak] { display: none !important; }
+        
+        /* DEFAULT THEME (Blue) */
+        :root {
+            --color-primary-50: #eff6ff;
+            --color-primary-100: #dbeafe;
+            --color-primary-500: #3b82f6;
+            --color-primary-600: #2563eb;
+            --color-primary-700: #1d4ed8;
+        }
+
+        /* PURPLE THEME */
+        [data-theme="purple"] {
+            --color-primary-50: #faf5ff;
+            --color-primary-100: #f3e8ff;
+            --color-primary-500: #a855f7;
+            --color-primary-600: #9333ea;
+            --color-primary-700: #7e22ce;
+        }
+
+        /* GREEN THEME */
+        [data-theme="green"] {
+            --color-primary-50: #f0fdf4;
+            --color-primary-100: #dcfce7;
+            --color-primary-500: #22c55e;
+            --color-primary-600: #16a34a;
+            --color-primary-700: #15803d;
+        }
+
+        /* ORANGE THEME */
+        [data-theme="orange"] {
+            --color-primary-50: #fff7ed;
+            --color-primary-100: #ffedd5;
+            --color-primary-500: #f97316;
+            --color-primary-600: #ea580c;
+            --color-primary-700: #c2410c;
+        }
     </style>
 </head>
-<body class="bg-gray-100 font-sans leading-normal tracking-normal">
+<body class="bg-gray-100 dark:bg-gray-900 font-sans leading-normal tracking-normal text-gray-900 dark:text-gray-100 transition-colors duration-300">
 
-    <div class="flex h-screen overflow-hidden" x-data="{ sidebarOpen: false, createModalOpen: false }">
+    <div class="flex h-screen overflow-hidden" 
+         x-data="{ 
+            sidebarOpen: false, 
+            createModalOpen: false,
+            darkMode: localStorage.getItem('darkMode') === 'true',
+            currentTheme: localStorage.getItem('themeColor') || 'default',
+            
+            toggleDark() {
+                this.darkMode = !this.darkMode;
+                localStorage.setItem('darkMode', this.darkMode);
+                if (this.darkMode) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            },
+            
+            setTheme(color) {
+                this.currentTheme = color;
+                localStorage.setItem('themeColor', color);
+                if (color === 'default') document.documentElement.removeAttribute('data-theme');
+                else document.documentElement.setAttribute('data-theme', color);
+            }
+         }"
+         x-init="$watch('darkMode', val => val ? document.documentElement.classList.add('dark') : document.documentElement.classList.remove('dark'));
+                 if(darkMode) document.documentElement.classList.add('dark');
+                 setTheme(currentTheme);"
+    >
 
-        <aside class="w-64 bg-gray-900 text-white flex-shrink-0 hidden md:flex flex-col transition-all duration-300">
-            <div class="h-16 flex items-center justify-center border-b border-gray-800">
-                <h1 class="text-xl font-bold tracking-wider uppercase">WordPanel</h1>
+        <aside class="w-64 bg-gray-900 dark:bg-gray-800 text-white flex-shrink-0 hidden md:flex flex-col transition-all duration-300 border-r border-gray-800 dark:border-gray-700">
+            <div class="h-16 flex items-center justify-center border-b border-gray-800 dark:border-gray-700">
+                <h1 class="text-xl font-bold tracking-wider uppercase text-primary-500">WordPanel</h1>
             </div>
+
             <nav class="flex-1 px-2 py-4 space-y-2">
-                <a href="/" class="flex items-center px-4 py-3 bg-gray-800 rounded-md text-white transition">
+                <a href="/" class="flex items-center px-4 py-3 bg-gray-800 dark:bg-gray-700 rounded-md text-white transition border-l-4 border-primary-500">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
                     Sites
                 </a>
-                <a href="#users" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 hover:text-white rounded-md transition">
+                <a href="#users" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 dark:hover:bg-gray-700 hover:text-white rounded-md transition">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     Users
                 </a>
             </nav>
-            <div class="p-4 border-t border-gray-800">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center font-bold text-sm">
+
+            <div class="p-4 border-t border-gray-800 dark:border-gray-700 space-y-4">
+                <div>
+                    <p class="text-xs font-bold text-gray-500 uppercase mb-2">Appearance</p>
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-sm text-gray-400">Dark Mode</span>
+                        <button @click="toggleDark()" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-gray-900" :class="darkMode ? 'bg-primary-600' : 'bg-gray-700'">
+                            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200 ease-in-out" :class="darkMode ? 'translate-x-6' : 'translate-x-1'"></span>
+                        </button>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button @click="setTheme('default')" class="w-6 h-6 rounded-full bg-blue-500 border-2 border-transparent hover:scale-110 transition" :class="currentTheme === 'default' ? 'ring-2 ring-white' : ''"></button>
+                        <button @click="setTheme('purple')" class="w-6 h-6 rounded-full bg-purple-500 border-2 border-transparent hover:scale-110 transition" :class="currentTheme === 'purple' ? 'ring-2 ring-white' : ''"></button>
+                        <button @click="setTheme('green')" class="w-6 h-6 rounded-full bg-green-500 border-2 border-transparent hover:scale-110 transition" :class="currentTheme === 'green' ? 'ring-2 ring-white' : ''"></button>
+                        <button @click="setTheme('orange')" class="w-6 h-6 rounded-full bg-orange-500 border-2 border-transparent hover:scale-110 transition" :class="currentTheme === 'orange' ? 'ring-2 ring-white' : ''"></button>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 pt-2 border-t border-gray-800">
+                    <div class="w-8 h-8 rounded-full bg-primary-600 flex items-center justify-center font-bold text-sm text-white">
                         {{ user[:2].upper() }}
                     </div>
                     <div>
-                        <p class="text-sm font-medium">{{ user }}</p>
-                        <a href="/logout" class="text-xs text-gray-400 hover:text-white">Log out</a>
+                        <p class="text-sm font-medium text-gray-200">{{ user }}</p>
+                        <a href="/logout" class="text-xs text-gray-500 hover:text-white">Log out</a>
                     </div>
                 </div>
             </div>
         </aside>
 
-        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100">
-            <div class="md:hidden flex items-center justify-between bg-white border-b p-4">
-                <h1 class="text-lg font-bold">WordPanel</h1>
-                <button @click="sidebarOpen = !sidebarOpen" class="text-gray-600 focus:outline-none">
+        <main class="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+            <div class="md:hidden flex items-center justify-between bg-white dark:bg-gray-800 border-b dark:border-gray-700 p-4">
+                <h1 class="text-lg font-bold text-primary-600">WordPanel</h1>
+                <button @click="sidebarOpen = !sidebarOpen" class="text-gray-600 dark:text-gray-300 focus:outline-none">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
                 </button>
             </div>
@@ -54,8 +154,8 @@
             <div class="container mx-auto px-6 py-8">
                 
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-semibold text-gray-800">Your Sites</h2>
-                    <button @click="createModalOpen = true" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded shadow hover:shadow-lg transition flex items-center gap-2">
+                    <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">Your Sites</h2>
+                    <button @click="createModalOpen = true" class="bg-primary-600 hover:bg-primary-700 text-white font-bold py-2 px-4 rounded shadow hover:shadow-lg transition flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                         New Site
                     </button>
@@ -63,126 +163,143 @@
 
                 <div x-show="createModalOpen" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
                     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                        <div x-show="createModalOpen" @click="createModalOpen = false" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+                        <div x-show="createModalOpen" @click="createModalOpen = false" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
                         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-                        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200 dark:border-gray-700">
                             
-                            <form hx-post="/create-site" hx-swap="outerHTML" @submit="createModalOpen = false">
-								<div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-									<h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">Create New WordPress Site</h3>
-									<div class="space-y-4">
-										<div>
-											<label class="block text-sm font-medium text-gray-700">Domain Name</label>
-											<input type="text" name="domain" placeholder="example.com" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
-										</div>
-										<div>
-											<label class="block text-sm font-medium text-gray-700">Admin Username</label>
-											<input type="text" name="username" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
-										</div>
-										<div>
-											<label class="block text-sm font-medium text-gray-700">Admin Email</label>
-											<input type="email" name="email" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" required>
-										</div>
-										<div>
-											<label class="block text-sm font-medium text-gray-700">Tech Stack</label>
-											<select name="stack" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-												<option value="fastcgi">Nginx + PHP 8.2 (FastCGI)</option>
-												<option value="redis">Nginx + Redis Cache (High Performance)</option>
-											</select>
-										</div>
+                            <form hx-post="/create-site" hx-swap="outerHTML">
+                                <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4" id="modal-title">Create New WordPress Site</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Domain Name</label>
+                                            <input type="text" name="domain" placeholder="example.com" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Admin Username</label>
+                                            <input type="text" name="username" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Admin Email</label>
+                                            <input type="email" name="email" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm" required>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tech Stack</label>
+                                            <select name="stack" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm">
+                                                <option value="fastcgi">Nginx + PHP 8.2 (FastCGI)</option>
+                                                <option value="redis">Nginx + Redis Cache (High Performance)</option>
+                                            </select>
+                                        </div>
 
-										<div class="mt-4 border-t border-gray-200 pt-4">
-											<h4 class="text-sm font-bold text-gray-700 mb-2">Deployment Assets</h4>
-											
-											<div class="bg-gray-50 border border-gray-200 rounded-md overflow-hidden">
-												<div class="flex justify-between bg-gray-100 px-3 py-2 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase">
-													<span>Name</span>
-													<div class="flex gap-4 mr-2">
-														<span>Install</span>
-														<span>Activate</span>
-													</div>
-												</div>
+                                        <div class="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                                            <h4 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Deployment Assets</h4>
+                                            
+                                            <div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden">
+                                                <div class="flex justify-between bg-gray-100 dark:bg-gray-700 px-3 py-2 border-b border-gray-200 dark:border-gray-600 text-xs font-bold text-gray-500 dark:text-gray-300 uppercase">
+                                                    <span>Name</span>
+                                                    <div class="flex gap-4 mr-2">
+                                                        <span>Install</span>
+                                                        <span>Activate</span>
+                                                    </div>
+                                                </div>
 
-												<div class="max-h-60 overflow-y-auto p-2 space-y-1">
-													{% for asset in all_assets %}
-													<div class="flex items-center justify-between bg-white p-2 rounded border border-gray-200 hover:bg-blue-50 transition">
-														<div class="flex items-center gap-2">
-															{% if asset.source == 'repo' %}
-																<span class="w-2 h-2 rounded-full bg-green-500" title="Repository"></span>
-															{% else %}
-																<span class="w-2 h-2 rounded-full bg-purple-500" title="Vault (Local)"></span>
-															{% endif %}
-															
-															<span class="text-sm font-medium text-gray-700">{{ asset.name }}</span>
-															<span class="text-xs text-gray-400">({{ asset.type }})</span>
-														</div>
-														
-														<div class="flex gap-8 mr-4">
-															<input type="checkbox" name="install" value="{{ asset.slug }}" 
-																   class="form-checkbox h-4 w-4 text-blue-600 rounded cursor-pointer">
-															
-															<input type="checkbox" name="activate" value="{{ asset.slug }}" 
-																   class="form-checkbox h-4 w-4 text-green-500 rounded cursor-pointer">
-														</div>
-													</div>
-													{% endfor %}
-												</div>
-											</div>
-										</div>
-										</div>
-								</div>
-								<div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-									<button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">Deploy</button>
-									<button type="button" @click="createModalOpen = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Cancel</button>
-								</div>
-							</form>
+                                                <div class="max-h-60 overflow-y-auto p-2 space-y-1">
+                                                    {% for asset in all_assets %}
+                                                    <div class="flex items-center justify-between bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-700 hover:bg-primary-50 dark:hover:bg-gray-700 transition">
+                                                        <div class="flex items-center gap-2">
+                                                            {% if asset.source == 'repo' %}
+                                                                <span class="w-2 h-2 rounded-full bg-green-500" title="Repository"></span>
+                                                            {% else %}
+                                                                <span class="w-2 h-2 rounded-full bg-purple-500" title="Vault (Local)"></span>
+                                                            {% endif %}
+                                                            
+                                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ asset.name }}</span>
+                                                            <span class="text-xs text-gray-400">({{ asset.type }})</span>
+                                                        </div>
+                                                        
+                                                        <div class="flex gap-8 mr-4">
+                                                            <input type="checkbox" name="install" value="{{ asset.slug }}" 
+                                                                   class="form-checkbox h-4 w-4 text-primary-600 rounded cursor-pointer dark:bg-gray-600 dark:border-gray-500">
+                                                            
+                                                            <input type="checkbox" name="activate" value="{{ asset.slug }}" 
+                                                                   class="form-checkbox h-4 w-4 text-green-500 rounded cursor-pointer dark:bg-gray-600 dark:border-gray-500">
+                                                        </div>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                                    <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary-600 text-base font-medium text-white hover:bg-primary-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm">Deploy</button>
+                                    <button type="button" @click="createModalOpen = false" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-500 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Cancel</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
 
-                <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+                <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                     <table class="min-w-full leading-normal">
                         <thead>
                             <tr>
-                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Domain</th>
-                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Type</th>
-                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-50 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">SSL</th>
-                                <th class="px-5 py-3 border-b-2 border-gray-200 bg-gray-50 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Domain</th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Type</th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">SSL</th>
+                                <th class="px-5 py-3 border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 text-center text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for site in sites %}
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
+                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+                                <td class="px-5 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm">
                                     <div class="flex items-center">
                                         <div class="ml-3">
-                                            <p class="text-gray-900 whitespace-no-wrap font-medium">
-                                                <a href="http://{{ site.domain }}" target="_blank" class="hover:underline hover:text-blue-600">{{ site.domain }}</a>
+                                            <p class="text-gray-900 dark:text-white whitespace-no-wrap font-medium">
+                                                <a href="http://{{ site.domain }}" target="_blank" class="hover:underline hover:text-primary-600">{{ site.domain }}</a>
                                             </p>
-                                            <p class="text-gray-500 text-xs">{{ site.created }}</p>
+                                            <p class="text-gray-500 dark:text-gray-400 text-xs">{{ site.created }}</p>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                <td class="px-5 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary-100 text-primary-700 dark:bg-primary-700 dark:text-primary-100">
                                         {{ site.type }}
                                     </span>
                                 </td>
-                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
-                                    {% if site.ssl %}
-                                    <span class="text-green-500 font-bold text-xs border border-green-200 bg-green-50 px-2 py-1 rounded">SECURE</span>
-                                    {% else %}
-                                    <span class="text-red-500 font-bold text-xs border border-red-200 bg-red-50 px-2 py-1 rounded">UNSECURE</span>
-                                    {% endif %}
-                                </td>
-                                <td class="px-5 py-5 border-b border-gray-200 bg-white text-sm text-center">
+                                <td class="px-5 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-center">
+									{% if site.ssl %}
+										<span class="text-green-500 font-bold text-xs border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900 px-2 py-1 rounded select-none">
+											SECURE
+										</span>
+									{% else %}
+										<button hx-post="/site/{{ site.domain }}/ssl"
+												hx-swap="outerHTML"
+												hx-indicator="#ssl-loading-{{ loop.index }}"
+												class="group relative inline-flex items-center justify-center gap-1 text-orange-600 hover:text-white hover:bg-orange-500 border border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-gray-900 px-3 py-1 rounded text-xs font-bold transition-all duration-200 shadow-sm"
+												title="Secure this site with Let's Encrypt">
+											
+											<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+											<span>Encrypt</span>
+											
+											<div id="ssl-loading-{{ loop.index }}" class="htmx-indicator absolute inset-0 bg-orange-500 rounded flex items-center justify-center">
+												<svg class="w-4 h-4 text-white animate-spin" fill="none" viewBox="0 0 24 24">
+													<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+													<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+												</svg>
+											</div>
+										</button>
+									{% endif %}
+								</td>
+                                <td class="px-5 py-5 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-center">
                                     <div class="flex items-center justify-center space-x-3">
-                                        <a href="/site/{{ site.domain }}/autologin" target="_blank" class="text-green-600 hover:text-green-900 flex items-center gap-1 text-xs font-bold uppercase tracking-wide border border-green-200 px-2 py-1 rounded hover:bg-green-50 transition">
+                                        <a href="/site/{{ site.domain }}/autologin" target="_blank" class="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 flex items-center gap-1 text-xs font-bold uppercase tracking-wide border border-green-200 dark:border-green-800 px-2 py-1 rounded hover:bg-green-50 dark:hover:bg-green-900 transition">
                                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
                                             WP Admin
                                         </a>
                                         <button 
-                                            class="text-gray-600 hover:text-gray-900 text-xs font-bold uppercase tracking-wide border border-gray-300 px-2 py-1 rounded hover:bg-gray-100 transition"
+                                            class="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-xs font-bold uppercase tracking-wide border border-gray-300 dark:border-gray-600 px-2 py-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                                             hx-get="/site/{{ site.domain }}" 
                                             hx-target="#modal-container">
                                             Manage
@@ -190,7 +307,7 @@
                                         <button 
                                             hx-delete="/site/{{ site.domain }}/delete"
                                             hx-confirm="Are you sure you want to DELETE {{ site.domain }}? This cannot be undone."
-                                            class="text-red-600 hover:text-red-900 text-xs font-bold uppercase tracking-wide border border-red-200 px-2 py-1 rounded hover:bg-red-50 transition">
+                                            class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-xs font-bold uppercase tracking-wide border border-red-200 dark:border-red-800 px-2 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900 transition">
                                             Delete
                                         </button>
                                     </div>
@@ -200,73 +317,75 @@
                         </tbody>
                     </table>
                 </div>
-				<div class="mt-8 bg-white p-6 rounded-lg shadow-md border border-gray-200">
-					<h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-4">Asset Vault</h2>
-					
-					<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-						<div class="md:col-span-1 bg-gray-50 p-6 rounded-lg border border-gray-200">
-							<h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Upload .zip</h4>
-							<form hx-post="/assets/upload" hx-encoding="multipart/form-data" hx-target="#vault-list" class="space-y-4">
-								<div>
-									<label class="block text-xs font-medium text-gray-700 mb-1">Asset Type</label>
-									<select name="type" class="w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm">
-										<option value="plugins">Plugin</option>
-										<option value="themes">Theme</option>
-									</select>
-								</div>
-								<div>
-									<label class="block text-xs font-medium text-gray-700 mb-1">File</label>
-									<input type="file" name="file" accept=".zip" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
-								</div>
-								<button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition text-sm font-medium shadow">Upload to Vault</button>
-							</form>
-						</div>
 
-						<div class="md:col-span-2">
-							<h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Vault Contents</h4>
-							<ul id="vault-list" class="space-y-2">
-								{% include "asset_list_fragment.html" %}
-							</ul>
-						</div>
-					</div>
-				</div>
-                <div id="users" class="mt-12 bg-white p-8 rounded-lg shadow-md border border-gray-200">
-                    <h2 class="text-xl font-semibold mb-6 text-gray-800 border-b pb-4">Team Management</h2>
+                <div class="mt-8 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+                    <h2 class="text-xl font-semibold mb-6 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-4">Asset Vault</h2>
+                    
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        
-                        <div class="md:col-span-1 bg-gray-50 p-6 rounded-lg border border-gray-200">
-                            <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Add New Admin</h4>
-                            <form hx-post="/users/add" hx-target="#user-list" hx-swap="beforeend" class="space-y-4">
+                        <div class="md:col-span-1 bg-gray-50 dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <h4 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Upload .zip</h4>
+                            <form hx-post="/assets/upload" hx-encoding="multipart/form-data" hx-target="#vault-list" class="space-y-4">
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Username</label>
-                                    <input type="text" name="username" class="w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm" required>
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Asset Type</label>
+                                    <select name="type" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm border p-2 text-sm">
+                                        <option value="plugins">Plugin</option>
+                                        <option value="themes">Theme</option>
+                                    </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Password</label>
-                                    <input type="password" name="password" class="w-full rounded-md border-gray-300 shadow-sm border p-2 text-sm" required>
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">File</label>
+                                    <input type="file" name="file" accept=".zip" class="w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-gray-700 dark:file:text-white" required>
                                 </div>
-								<button type="submit" class="w-full bg-gray-900 text-white px-4 py-2 rounded-md hover:bg-black transition text-sm font-medium shadow">Create User</button>
+                                <button type="submit" class="w-full bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition text-sm font-medium shadow">Upload to Vault</button>
                             </form>
                         </div>
 
                         <div class="md:col-span-2">
-                            <h4 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Active Administrators</h4>
-                            <div class="bg-white rounded-md border border-gray-200 overflow-hidden">
-                                <ul id="user-list" class="divide-y divide-gray-200">
+                            <h4 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Vault Contents</h4>
+                            <ul id="vault-list" class="space-y-2">
+                                {% include "asset_list_fragment.html" %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="users" class="mt-12 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
+                    <h2 class="text-xl font-semibold mb-6 text-gray-800 dark:text-white border-b dark:border-gray-700 pb-4">Team Management</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        
+                        <div class="md:col-span-1 bg-gray-50 dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                            <h4 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Add New Admin</h4>
+                            <form hx-post="/users/add" hx-target="#user-list" hx-swap="beforeend" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+                                    <input type="text" name="username" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm border p-2 text-sm" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                                    <input type="password" name="password" class="w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm border p-2 text-sm" required>
+                                </div>
+                                <button type="submit" class="w-full bg-gray-900 dark:bg-gray-700 text-white px-4 py-2 rounded-md hover:bg-black dark:hover:bg-gray-600 transition text-sm font-medium shadow">Create User</button>
+                            </form>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <h4 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Active Administrators</h4>
+                            <div class="bg-white dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                <ul id="user-list" class="divide-y divide-gray-200 dark:divide-gray-700">
                                     {% for admin in admin_users %}
-                                    <li class="px-6 py-4 flex justify-between items-center hover:bg-gray-50 transition" id="user-{{ admin }}">
+                                    <li class="px-6 py-4 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition" id="user-{{ admin }}">
                                         <div class="flex items-center gap-3">
-                                            <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs">
+                                            <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center text-gray-600 dark:text-gray-200 font-bold text-xs">
                                                 {{ admin[:2].upper() }}
                                             </div>
-                                            <span class="font-medium text-gray-700">{{ admin }}</span>
+                                            <span class="font-medium text-gray-700 dark:text-gray-200">{{ admin }}</span>
                                         </div>
                                         {% if admin != 'admin' and admin != user %} 
-                                        <button hx-delete="/users/{{ admin }}" hx-target="#user-{{ admin }}" hx-swap="outerHTML" class="text-red-600 hover:text-red-900 text-xs font-bold uppercase tracking-wide border border-red-200 px-3 py-1 rounded hover:bg-red-50 transition">
+                                        <button hx-delete="/users/{{ admin }}" hx-target="#user-{{ admin }}" hx-swap="outerHTML" class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-xs font-bold uppercase tracking-wide border border-red-200 dark:border-red-800 px-3 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900 transition">
                                             Remove
                                         </button>
                                         {% elif admin == user %}
-                                        <span class="text-xs text-gray-400 font-medium bg-gray-100 px-2 py-1 rounded">YOU</span>
+                                        <span class="text-xs text-gray-400 font-medium bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">YOU</span>
                                         {% endif %}
                                     </li>
                                     {% endfor %}

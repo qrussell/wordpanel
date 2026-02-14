@@ -1,0 +1,13 @@
+<div class="p-6" hx-get="/progress/{{ domain }}" hx-trigger="load delay:1s" hx-swap="outerHTML">
+    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Deploying {{ domain }}...</h3>
+    
+    <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 mb-2 overflow-hidden">
+        <div class="bg-primary-600 h-4 rounded-full transition-all duration-500 ease-out" 
+             style="width: {{ percent }}%"></div>
+    </div>
+    
+    <div class="flex justify-between text-xs">
+        <span class="font-bold text-primary-600">{{ percent }}%</span>
+        <span class="text-gray-500 dark:text-gray-400 font-medium animate-pulse">{{ status }}</span>
+    </div>
+</div>
