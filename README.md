@@ -1,6 +1,6 @@
-# WordPanel 🚀
+# WordOps Panel 🚀
 
-**WordPanel** is a lightweight, modern web interface for [WordOps](https://wordops.net/), designed to simplify WordPress server management. Built with **FastAPI**, **HTMX**, and **Tailwind CSS**, it provides a streamlined dashboard for deploying sites, managing assets, and handling server administration without touching the command line.
+**WordOps Panel** is a lightweight, modern web interface for [WordOps](https://wordops.net/), designed to simplify WordPress server management. Built with **FastAPI**, **HTMX**, and **Tailwind CSS**, it provides a streamlined dashboard for deploying sites, managing assets, and handling server administration without touching the command line.
 
 ---
 
@@ -17,7 +17,7 @@
 
 * **👥 Team Management:** Create multiple administrator accounts with secure authentication (Argon2 hashing).
 * **🔒 Security:** JWT-based stateless authentication and protected routes.
-* **🛠️ System Integration:** Runs as a native systemd service (`wordpanel.service`).
+* **🛠️ System Integration:** Runs as a native systemd service (`WordOps Panel.service`).
 
 ---
 
@@ -34,29 +34,29 @@
 ## 📥 Installation
 
 ### 1. Prerequisites (Required)
-WordPanel is a control panel *for* WordOps. You must have WordOps installed on your server first.
+WordOps Panel is a control panel *for* WordOps. You must have WordOps installed on your server first.
 
 **Install WordOps:**
 ```bash
 # Official WordOps One-Step Installer
 wget -qO wo wops.cc && sudo bash wo
 ```
-WordPanel is distributed as a custom Debian package.
+WordOps Panel is distributed as a custom Debian package.
 
 ### 2. Download the package
 
 Navigate to the parent directory of your source code:
 
-Download the installer [Releases](https://github.com/qrussell/wordpanel/releases)
+Download the installer [Releases](https://github.com/qrussell/wordops-panel/releases)
 
 ### 3. Install the Package
 
 ```bash
-sudo apt install ./wordpanel-1.0.deb
+sudo apt install ./wordops-panel-1.0.deb
 
 ```
 
-*During installation, the package will automatically create a secure Python virtual environment in `/opt/wordpanel/venv`, install dependencies, and start the systemd service.*
+*During installation, the package will automatically create a secure Python virtual environment in `/opt/wordops-panel/venv`, install dependencies, and start the systemd service.*
 
 ### 4. Firewall Setup
 
@@ -101,7 +101,7 @@ Open your browser and navigate to:
 ## 📂 Project Structure
 
 ```text
-/opt/wordpanel
+/opt/wordops-panel
 ├── main.py                 # Application entry point & API routes
 ├── auth.py                 # JWT Auth, Password Hashing (Argon2), DB Logic
 ├── templates/              # Jinja2 HTML Templates
@@ -117,12 +117,12 @@ Open your browser and navigate to:
 
 ## 🧑‍💻 Development
 
-To run WordPanel locally for development without building the package:
+To run WordOps Panel locally for development without building the package:
 
 1. **Clone & Setup:**
 ```bash
-git clone https://github.com/qrussell/wordpanel.git
-cd wordpanel
+git clone https://github.com/qrussell/wordops-panel.git
+cd wordops-panel
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
