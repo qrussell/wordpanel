@@ -1,43 +1,70 @@
-<div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="this.closest('.fixed').remove()"></div>
-        
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" 
+             onclick="document.getElementById('modal-container').innerHTML = ''"></div>
+
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-        
-        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="flex items-start">
+
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200 dark:border-gray-700">
+            
+            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
                     <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     </div>
                     <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
                             Manage {{ domain }}
                         </h3>
-                        <div class="mt-4 space-y-3">
-                            <div class="grid grid-cols-2 gap-3">
-                                <button hx-post="/site/{{ domain }}/clean" hx-swap="outerHTML" class="flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                    Purge Cache
-                                </button>
-                                <button hx-post="/site/{{ domain }}/reset-perm" hx-swap="outerHTML" class="flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                                    Fix Permissions
-                                </button>
+                        
+                        <div class="mt-4 space-y-4">
+                            <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-md">
+                                <p class="text-sm text-gray-600 dark:text-gray-300">
+                                    <span class="font-bold">Type:</span> {{ site.type }}
+                                </p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">
+                                    <span class="font-bold">PHP Version:</span> {{ site.php }}
+                                </p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">
+                                    <span class="font-bold">Created:</span> {{ site.created }}
+                                </p>
                             </div>
-                            
-                            <div class="mt-4 pt-4 border-t border-gray-100">
-                                <h4 class="text-xs font-bold text-gray-500 uppercase mb-2">Reset Admin Password</h4>
-                                <form hx-post="/site/{{ domain }}/reset-wp-password" hx-swap="innerHTML" class="flex gap-2">
-                                    <input type="password" name="password" placeholder="New Password" class="flex-1 rounded-md border-gray-300 border shadow-sm p-2 text-sm" required>
-                                    <button type="submit" class="bg-blue-600 text-white px-3 py-2 rounded-md text-sm hover:bg-blue-700">Update</button>
-                                </form>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <a href="http://{{ domain }}" target="_blank" class="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                    Visit Site
+                                </a>
+                                <a href="/site/{{ domain }}/autologin" target="_blank" class="flex items-center justify-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700">
+                                    WP Admin Login
+                                </a>
+                            </div>
+
+                            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">SSL Status</span>
+                                    <div hx-get="/site/{{ domain }}/check-ssl" hx-trigger="load">
+                                        <span class="text-gray-400 text-xs">Checking...</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button type="button" onclick="this.closest('.fixed').remove()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+            
+            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse justify-between items-center">
+                <button onclick="document.getElementById('modal-container').innerHTML = ''" type="button" class="w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-500 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
                     Close
+                </button>
+                
+                <button 
+                    hx-delete="/site/{{ domain }}/delete"
+                    hx-confirm="Are you sure? This will delete {{ domain }} and cannot be undone."
+                    hx-target="closest tr"
+                    hx-swap="outerHTML"
+                    onclick="document.getElementById('modal-container').innerHTML = ''"
+                    class="text-red-600 hover:text-red-900 text-sm font-bold">
+                    Delete Site
                 </button>
             </div>
         </div>

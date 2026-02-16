@@ -3,10 +3,7 @@ import sqlite3
 import os
 import shutil
 import requests
-import yaml
-import json
-import base64
-import socket
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse # Added JSONResponse
 from fastapi import UploadFile, File
 from fastapi import FastAPI, Request, Form, BackgroundTasks, Depends, HTTPException, status, Response
 from fastapi.templating import Jinja2Templates
@@ -69,118 +66,6 @@ def save_setting(key, value):
     except Exception as e:
         print(f"Settings Save Error: {e}")
 
-# --- NETWORK HELPERS ---
-def get_server_ip():
-    """Detects the primary IP of the server to avoid using localhost."""
-    try:
-        # Connect to a public endpoint to determine the route/source IP
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("1.1.1.1", 80))
-        ip = s.getsockname()[0]
-        s.close()
-        return ip
-    except:
-        return "127.0.0.1"
-
-def get_target_service():
-    """Returns the configured target IP or defaults to detected IP."""
-    user_ip = get_setting("cf_target_ip")
-    if user_ip and user_ip.strip():
-        return f"http://{user_ip}:80"
-    return f"http://{get_server_ip()}:80"
-
-# --- CLOUDFLARE API HELPERS ---
-
-def get_account_id(email, key):
-    headers = {"X-Auth-Email": email, "X-Auth-Key": key, "Content-Type": "application/json"}
-    try:
-        r = requests.get("https://api.cloudflare.com/client/v4/accounts", headers=headers, timeout=5)
-        if r.status_code == 200:
-            res = r.json().get('result', [])
-            if res: return res[0]['id']
-    except: pass
-    return None
-
-def get_cf_zone_id(domain, email, key):
-    headers = {"X-Auth-Email": email, "X-Auth-Key": key, "Content-Type": "application/json"}
-    parts = domain.split('.')
-    for i in range(len(parts) - 1):
-        search_domain = ".".join(parts[i:])
-        try:
-            r = requests.get(f"https://api.cloudflare.com/client/v4/zones?name={search_domain}&status=active", headers=headers, timeout=5)
-            if r.status_code == 200:
-                for zone in r.json().get('result', []):
-                    if zone['name'] == search_domain: 
-                        return zone['id']
-        except: pass
-    return None
-
-def add_cf_dns_record(domain, tunnel_id, email, key):
-    zone_id = get_cf_zone_id(domain, email, key)
-    if not zone_id: return False
-    
-    headers = {"X-Auth-Email": email, "X-Auth-Key": key, "Content-Type": "application/json"}
-    target = f"{tunnel_id}.cfargotunnel.com"
-    data = {"type": "CNAME", "name": domain, "content": target, "proxied": True, "comment": "Managed by WordOps Panel"}
-    
-    try:
-        r = requests.get(f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records?name={domain}", headers=headers)
-        existing = r.json().get('result', [])
-        if existing:
-            requests.put(f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records/{existing[0]['id']}", headers=headers, json=data)
-        else:
-            requests.post(f"https://api.cloudflare.com/client/v4/zones/{zone_id}/dns_records", headers=headers, json=data)
-        return True
-    except: return False
-
-# --- TUNNEL MANAGEMENT STRATEGIES ---
-
-def update_local_tunnel_config(new_domain):
-    config_path = "/etc/cloudflared/config.yml"
-    config = {"ingress": [{"service": "http_status:404"}]}
-    
-    if os.path.exists(config_path):
-        with open(config_path, 'r') as f:
-            try:
-                loaded = yaml.safe_load(f)
-                if loaded: config = loaded
-            except: pass
-
-    if "ingress" not in config: config["ingress"] = [{"service": "http_status:404"}]
-    
-    if not any(r.get("hostname") == new_domain for r in config["ingress"]):
-        idx = max(0, len(config["ingress"]) - 1)
-        # Use dynamic target service (IP)
-        config["ingress"].insert(idx, {"hostname": new_domain, "service": get_target_service()})
-        
-        with open(config_path, 'w') as f: yaml.dump(config, f, default_flow_style=False)
-        subprocess.run(["systemctl", "restart", "cloudflared"])
-        print(f"DEBUG: Local config updated for {new_domain} -> {get_target_service()}")
-
-def update_remote_tunnel_config(domain, tunnel_id, email, key):
-    account_id = get_account_id(email, key)
-    if not account_id: return False
-    
-    headers = {"X-Auth-Email": email, "X-Auth-Key": key, "Content-Type": "application/json"}
-    base_url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/cfd_tunnel/{tunnel_id}/configurations"
-    
-    try:
-        r = requests.get(base_url, headers=headers)
-        config = r.json().get('result', {}).get('config', {})
-        if not config: config = {"ingress": [{"service": "http_status:404"}]}
-        
-        ingress = config.get("ingress", [])
-        if not any(r.get("hostname") == domain for r in ingress):
-            idx = max(0, len(ingress) - 1)
-            # Use dynamic target service (IP)
-            ingress.insert(idx, {"hostname": domain, "service": get_target_service()})
-            config["ingress"] = ingress
-            
-            requests.put(base_url, headers=headers, json={"config": config})
-            print(f"DEBUG: Remote config updated for {domain} -> {get_target_service()}")
-    except Exception as e:
-        print(f"Remote Update Error: {e}")
-
 # --- ASSET HELPERS ---
 def get_vault_assets():
     assets = []
@@ -208,12 +93,23 @@ async def get_current_user(request: Request):
         return payload.get("sub")
     except: raise HTTPException(status_code=401)
 
+@app.exception_handler(HTTPException)
+async def unauthorized_redirect_handler(request: Request, exc: HTTPException):
+    # If the error is 401 (Unauthorized), redirect to the login page
+    if exc.status_code == 401:
+        return RedirectResponse(url="/login")
+    # For all other HTTP errors, return the standard JSON response
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail}
+    )
+	
 @app.get("/auth/check")
 async def check(request: Request):
     await get_current_user(request)
     return Response(status_code=200)
 
-# --- HELPERS ---
+# --- HELPERS (WordOps) ---
 def get_wo_sites():
     try:
         conn = sqlite3.connect('/var/lib/wo/dbase.db')
@@ -231,28 +127,40 @@ def run_wo_create(domain: str, ptype: str, username: str, email: str, install_li
     cmd = ["/usr/local/bin/wo", "site", "create", domain, "--wp", f"--user={username}", f"--email={email}", "--letsencrypt"]
     if ptype == "fastcgi": cmd.append("--wpfc")
     elif ptype == "redis": cmd.append("--wpredis")
-    subprocess.run(cmd, capture_output=True)
     
-    # --- HYBRID TUNNEL LOGIC ---
+    # Check for Cloudflare Credentials
     cf_email = get_setting("cf_email")
     cf_key = get_setting("cf_key")
-    tunnel_id = get_setting("cf_tunnel_id")
-    tunnel_mode = get_setting("cf_tunnel_mode")
+    env = os.environ.copy()
     
-    if cf_email and cf_key and tunnel_id:
-        deployment_progress[domain] = {"percent": 40, "status": "Configuring Tunnel..."}
-        
-        if tunnel_mode == 'local':
-            update_local_tunnel_config(domain)
-        else:
-            update_remote_tunnel_config(domain, tunnel_id, cf_email, cf_key)
-            
-        deployment_progress[domain] = {"percent": 45, "status": "Updating DNS..."}
-        add_cf_dns_record(domain, tunnel_id, cf_email, cf_key)
-    # ---------------------------
+    if cf_email and cf_key:
+        print(f"DEBUG: Using Cloudflare DNS Validation for {domain}")
+        env["CF_Email"] = cf_email
+        env["CF_Key"] = cf_key
+        cmd.append("--dns=dns_cf")
+    else:
+        print(f"DEBUG: Using Standard HTTP Validation for {domain}")
+        # Standard validation requires Port 80 to be open
+    
+    # Run the command
+    subprocess.run(cmd, env=env, capture_output=True)
+    
+    # Configure Assets
+    deployment_progress[domain] = {"percent": 50, "status": "Configuring WP-CLI..."}
+    site_path = f"/var/www/{domain}/htdocs"
+    wp_base = ["sudo", "-u", "www-data", "/usr/local/bin/wp", "--path=" + site_path]
 
-    deployment_progress[domain] = {"percent": 90, "status": "Finalizing..."}
-    subprocess.run(["sudo", "-u", "www-data", "/usr/local/bin/wp", "--path=" + f"/var/www/{domain}/htdocs", "plugin", "install", "one-time-login", "--activate"], capture_output=True)
+    clean_install_list = [p for p in install_list if p]
+    if clean_install_list:
+        deployment_progress[domain] = {"percent": 60, "status": "Installing assets..."}
+        for asset in clean_install_list:
+            is_theme = "/themes/" in asset
+            install_cmd = wp_base + ["theme" if is_theme else "plugin", "install", asset]
+            if asset in activate_list: install_cmd.append("--activate")
+            subprocess.run(install_cmd, capture_output=True)
+
+    deployment_progress[domain] = {"percent": 95, "status": "Finalizing..."}
+    subprocess.run(wp_base + ["plugin", "install", "one-time-login", "--activate"], capture_output=True)
     deployment_progress[domain] = {"percent": 100, "status": "Complete!"}
 
 # --- ROUTES ---
@@ -289,85 +197,39 @@ async def progress(request: Request, domain: str):
     if data["percent"] >= 100: return HTMLResponse('<div class="text-center p-6"><h3 class="text-green-600 font-bold">Deployed!</h3><a href="/" class="underline">Refresh</a></div>')
     return templates.TemplateResponse("progress_fragment.html", {"request": request, "domain": domain, **data})
 
+# --- FIXED: SITE MODAL ROUTE ---
+@app.get("/site/{domain}", response_class=HTMLResponse)
+async def get_site_modal(request: Request, domain: str, user: str = Depends(get_current_user)):
+    sites = get_wo_sites()
+    site = next((s for s in sites if s["domain"] == domain), None)
+    return templates.TemplateResponse("modal.html", {"request": request, "site": site, "domain": domain})
+
 @app.get("/settings/modal")
 async def settings(request: Request):
-    detected_ip = get_server_ip()
     return templates.TemplateResponse("settings_modal.html", {
         "request": request,
         "cf_email": get_setting("cf_email") or "",
-        "cf_key": get_setting("cf_key") or "",
-        "cf_tunnel_token": get_setting("cf_tunnel_token") or "",
-        "cf_tunnel_id": get_setting("cf_tunnel_id") or "",
-        "cf_tunnel_mode": get_setting("cf_tunnel_mode") or "remote",
-        "cf_target_ip": get_setting("cf_target_ip") or "",
-        "detected_ip": detected_ip
+        "cf_key": get_setting("cf_key") or ""
     })
 
 @app.post("/settings/save")
-async def save_settings(
-    cf_email: str = Form(""), cf_key: str = Form(""),
-    cf_tunnel_token: str = Form(""), cf_tunnel_id: str = Form(""),
-    cf_target_ip: str = Form(""),
-    action: str = Form("save")
-):
+async def save_settings(cf_email: str = Form(""), cf_key: str = Form("")):
     save_setting("cf_email", cf_email)
     save_setting("cf_key", cf_key)
-    save_setting("cf_target_ip", cf_target_ip)
-    
-    # CASE 1: AUTO-CREATE LOCAL TUNNEL
-    if action == "create_tunnel":
-        acc_id = get_account_id(cf_email, cf_key)
-        if not acc_id: return HTMLResponse('<div class="text-red-600">Error: Check API Key/Email</div>')
-        
-        headers = {"X-Auth-Email": cf_email, "X-Auth-Key": cf_key, "Content-Type": "application/json"}
-        r = requests.post(f"https://api.cloudflare.com/client/v4/accounts/{acc_id}/cfd_tunnel", headers=headers, json={"name": "wordops-panel-local", "config_src": "local"})
-        
-        if r.status_code != 200: return HTMLResponse(f'<div class="text-red-600">Creation Failed: {r.text}</div>')
-        
-        data = r.json()['result']
-        t_id, t_secret = data['id'], data['tunnel_secret']
-        
-        os.makedirs("/etc/cloudflared", exist_ok=True)
-        with open("/etc/cloudflared/cert.json", "w") as f: json.dump({"AccountTag": acc_id, "TunnelSecret": t_secret, "TunnelID": t_id}, f)
-        with open("/etc/cloudflared/config.yml", "w") as f: yaml.dump({"tunnel": t_id, "credentials-file": "/etc/cloudflared/cert.json", "ingress": [{"service": "http_status:404"}]}, f)
-            
-        subprocess.run(["cloudflared", "service", "uninstall"], capture_output=True)
-        subprocess.run(["cloudflared", "service", "install"], capture_output=True)
-        subprocess.run(["systemctl", "restart", "cloudflared"], capture_output=True)
-        
-        save_setting("cf_tunnel_id", t_id)
-        save_setting("cf_tunnel_mode", "local")
-        save_setting("cf_tunnel_token", "")
-        
-        return HTMLResponse('<div class="text-green-600 font-bold">Tunnel Created (Local Mode)!</div>')
+    return HTMLResponse('<div class="text-green-600 font-bold">Cloudflare Credentials Saved.</div>')
 
-    # CASE 2: MANUAL TOKEN (REMOTE)
-    if cf_tunnel_token:
-        save_setting("cf_tunnel_token", cf_tunnel_token)
-        save_setting("cf_tunnel_id", cf_tunnel_id)
-        save_setting("cf_tunnel_mode", "remote")
-        
-        subprocess.run(["cloudflared", "service", "uninstall"], capture_output=True)
-        subprocess.run(["cloudflared", "service", "install", cf_tunnel_token], capture_output=True)
-        subprocess.run(["systemctl", "restart", "cloudflared"], capture_output=True)
-        
-        return HTMLResponse('<div class="text-green-600 font-bold">Token Saved (Remote Mode)!</div>')
-
-    return HTMLResponse('<div class="text-green-600">Settings Saved.</div>')
-
-# ... (Rest of User/Asset/Dashboard routes same as before) ...
 @app.post("/users/add")
-async def create_user_route(username: str = Form(...), password: str = Form(...), user: str = Depends(get_current_user)):
+async def create_user_route(username: str = Form(...), password: str = Form(...)):
     if add_user(username, password): return HTMLResponse(f"<li>{username} <span class='text-green-600'>Added!</span></li>")
     return HTMLResponse("<li class='text-red-600'>Exists</li>")
 
 @app.delete("/users/{username}")
-async def delete_user_route(username: str, user: str = Depends(get_current_user)):
+async def delete_user_route(username: str):
     delete_user(username)
     return HTMLResponse("") 
 
 @app.post("/assets/upload")
-async def upload_asset(file: UploadFile = File(...), type: str = Form(...), user: str = Depends(get_current_user)):
+async def upload_asset(file: UploadFile = File(...), type: str = Form(...)):
     if type not in ["plugins", "themes"]: return HTMLResponse("Invalid type", status_code=400)
     target_dir = os.path.join(ASSET_DIR, type)
     os.makedirs(target_dir, exist_ok=True)
@@ -375,7 +237,7 @@ async def upload_asset(file: UploadFile = File(...), type: str = Form(...), user
     return templates.TemplateResponse("asset_list_fragment.html", {"request": {}, "assets": get_vault_assets()})
 
 @app.delete("/assets/delete")
-async def delete_asset(request: Request, path: str = Form(...), user: str = Depends(get_current_user)):
+async def delete_asset(request: Request, path: str = Form(...)):
     if path.startswith(ASSET_DIR) and ".." not in path and os.path.exists(path): os.remove(path)
     return templates.TemplateResponse("asset_list_fragment.html", {"request": request, "assets": get_vault_assets()})
 
@@ -388,6 +250,7 @@ async def dashboard(request: Request, user: str = Depends(get_current_user)):
 
 @app.delete("/site/{domain}/delete")
 def delete_site(domain: str, user: str = Depends(get_current_user)):
+    # Non-blocking sync delete
     result = subprocess.run(["/usr/local/bin/wo", "site", "delete", domain, "--no-prompt"], capture_output=True, text=True)
     if result.returncode == 0:
         return HTMLResponse(f'<tr class="bg-red-50"><td colspan="5" class="px-5 py-5 text-center text-red-600 font-bold">DOMAIN {domain} DELETED</td></tr>')
