@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site.domain }} - WordOps Panel</title>
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { 
+            darkMode: 'class', 
+            theme: { extend: { colors: { primary: {50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8'} } } } 
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 font-sans text-gray-900 dark:text-gray-100 transition-colors duration-300"
+      x-data="{ 
+        sidebarOpen: false, 
+        tab: 'settings',
+        darkMode: localStorage.getItem('darkMode') === 'true'
+      }"
+      x-init="$watch('darkMode', val => {
+          localStorage.setItem('darkMode', val);
+          if (val) document.documentElement.classList.add('dark');
+          else document.documentElement.classList.remove('dark');
+      }); if (darkMode) document.documentElement.classList.add('dark');">
+
+    <div class="flex h-screen overflow-hidden">
+        <aside class="w-64 bg-gray-900 dark:bg-gray-800 text-white flex-shrink-0 hidden md:flex flex-col border-r border-gray-800">
+            <div class="h-16 flex items-center justify-center border-b border-gray-800">
+                <h1 class="text-xl font-bold tracking-tight text-white">WordOps Panel</h1>
+            </div>
+            <nav class="flex-1 px-2 py-4 space-y-2">
+                <a href="/" class="flex items-center px-4 py-3 text-gray-400 hover:bg-gray-800 rounded-md hover:text-white transition">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                    Sites
+                </a>
+                <div class="flex items-center px-4 py-3 bg-gray-800 rounded-md text-white border-l-4 border-primary-500">
+                    <span class="font-mono text-sm truncate">{{ site.domain }}</span>
+                </div>
+            </nav>
+            <div class="p-4 border-t border-gray-800 space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-sm text-gray-400">Dark Mode</span>
+                    <button @click="darkMode = !darkMode" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none" :class="darkMode ? 'bg-primary-600' : 'bg-gray-700'">
+                        <span class="inline-block h-4 w-4 transform rounded-full bg-white transition duration-200" :class="darkMode ? 'translate-x-6' : 'translate-x-1'"></span>
+                    </button>
+                </div>
+                <div class="flex items-center gap-3 pt-2 border-t border-gray-700">
+                    <p class="text-sm font-medium">{{ user }}</p>
+                    <a href="/logout" class="text-xs text-gray-500 hover:text-white transition">Log out</a>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-8">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ site.domain }}</h1>
+                    <div class="flex gap-2 mt-2 text-sm text-gray-500">
+                        <span class="font-mono bg-gray-200 dark:bg-gray-700 px-1 rounded">{{ site.user }}</span>
+                        <span>&bull;</span>
+                        <span class="font-mono bg-gray-200 dark:bg-gray-700 px-1 rounded">{{ site.root }}</span>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <a href="http://{{ site.domain }}" target="_blank" class="px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 font-bold text-sm transition">Open Site</a>
+                    <a href="/site/{{ site.domain }}/autologin" target="_blank" class="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 font-bold text-sm transition shadow">WP Admin</a>
+                </div>
+            </div>
+
+            <div class="mb-6 border-b border-gray-200 dark:border-gray-700">
+                <nav class="flex -mb-px space-x-8">
+                    <button @click="tab = 'settings'" :class="tab === 'settings' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'" class="pb-4 px-1 border-b-2 font-medium text-sm transition">Settings</button>
+                    <button @click="tab = 'php'" :class="tab === 'php' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'" class="pb-4 px-1 border-b-2 font-medium text-sm transition">PHP</button>
+                    <button @click="tab = 'ssl'" :class="tab === 'ssl' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'" class="pb-4 px-1 border-b-2 font-medium text-sm transition">SSL</button>
+                    <button @click="tab = 'database'" :class="tab === 'database' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'" class="pb-4 px-1 border-b-2 font-medium text-sm transition">Database</button>
+                    <button @click="tab = 'nginx'" :class="tab === 'nginx' ? 'border-primary-500 text-primary-600 dark:text-primary-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'" class="pb-4 px-1 border-b-2 font-medium text-sm transition">Nginx</button>
+                </nav>
+            </div>
+
+            <div x-show="tab === 'settings'" class="space-y-6">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Site Information</h3>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <label class="block text-gray-500 dark:text-gray-400 text-xs uppercase font-bold mb-1">Domain</label>
+                            <input readonly value="{{ site.domain }}" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-2 text-gray-700 dark:text-gray-300">
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 dark:text-gray-400 text-xs uppercase font-bold mb-1">Root Directory</label>
+                            <input readonly value="{{ site.root }}" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-2 text-gray-700 dark:text-gray-300 font-mono">
+                        </div>
+                        <div>
+                            <label class="block text-gray-500 dark:text-gray-400 text-xs uppercase font-bold mb-1">System User</label>
+                            <input readonly value="{{ site.user }}" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-2 text-gray-700 dark:text-gray-300">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Reset WP Admin Password</h3>
+                    <form hx-post="/site/{{ site.domain }}/reset-password" hx-target="#pwd-msg" class="flex items-end gap-4">
+                        <div class="flex-1">
+                            <label class="block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1">New Password</label>
+                            <input type="password" name="password" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded p-2 text-gray-900 dark:text-white" required>
+                        </div>
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700 transition">Update Password</button>
+                    </form>
+                    <div id="pwd-msg"></div>
+                </div>
+
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-red-200 dark:border-red-900">
+                    <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Danger Zone</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Deleting this site will remove all files and databases.</p>
+                    <button hx-delete="/site/{{ site.domain }}/delete" hx-confirm="Confirm delete?" class="px-4 py-2 bg-red-600 text-white font-bold rounded hover:bg-red-700 text-sm transition">Delete Site</button>
+                </div>
+            </div>
+
+            <div x-show="tab === 'php'" class="space-y-6">
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">PHP Version</h3>
+                    <form hx-post="/site/{{ site.domain }}/update-php" hx-target="#php-msg" class="flex gap-4">
+                        <select name="version" class="bg-gray-50 border border-gray-300 text-sm rounded-lg p-2.5 w-64 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            {% for v in ['8.0', '8.1', '8.2', '8.3'] %}
+                            <option value="{{ v }}" {% if site.php == v %}selected{% endif %}>PHP {{ v }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="px-4 py-2 bg-primary-600 text-white font-bold rounded hover:bg-primary-700 transition">Update</button>
+                    </form>
+                    <div id="php-msg" class="mt-4"></div>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                    <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">PHP Configuration</h3>
+                    <form hx-post="/site/{{ site.domain }}/save-php-settings" hx-target="#php-conf-msg">
+                        <input type="hidden" name="version" value="{{ site.php }}">
+                        <div class="grid grid-cols-2 gap-6 mb-6">
+                            {% for k, v in site.php_conf.items() %}
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">{{ k }}</label>
+                                <input type="text" name="{{ k }}" value="{{ v }}" class="w-full bg-gray-50 border border-gray-300 text-sm rounded p-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <button type="submit" class="px-4 py-2 bg-primary-600 text-white font-bold rounded hover:bg-primary-700 transition">Save</button>
+                            <div id="php-conf-msg"></div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div x-show="tab === 'database'" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                 <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Database Info</h3>
+                 <div class="space-y-4">
+                     {% for k, v in site.db.items() %}
+                     <div>
+                         <label class="block text-xs font-bold text-gray-500 uppercase mb-1">{{ k }}</label>
+                         <input readonly value="{{ v }}" class="w-full bg-gray-100 border border-gray-300 text-sm rounded p-2 font-mono dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                     </div>
+                     {% endfor %}
+                 </div>
+            </div>
+
+            <div x-show="tab === 'nginx'" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Config Viewer</h3>
+                <textarea readonly class="w-full h-96 p-4 text-xs font-mono bg-gray-900 text-gray-300 rounded border-none">{{ site.nginx }}</textarea>
+            </div>
+
+            <div x-show="tab === 'ssl'" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow border border-gray-200 dark:border-gray-700">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">SSL Status</h3>
+                        <p class="text-sm text-gray-500">Current: <span class="font-bold {{ 'text-green-600 dark:text-green-400' if 'Secure' in site.ssl else 'text-red-600 dark:text-red-400' }}">{{ site.ssl }}</span></p>
+                    </div>
+                    <form hx-post="/site/{{ site.domain }}/toggle-ssl" hx-target="#ssl-msg">
+                        <input type="hidden" name="enable" value="{{ 'false' if 'Enabled' in site.ssl else 'true' }}">
+                        <button type="submit" class="px-4 py-2 bg-primary-600 text-white font-bold rounded hover:bg-primary-700 transition">Toggle Let's Encrypt</button>
+                    </form>
+                </div>
+                <div id="ssl-msg" class="mt-4"></div>
+            </div>
+
+        </main>
+    </div>
+</body>
+</html>

@@ -1,71 +1,136 @@
-<div class="fixed inset-0 z-50 overflow-y-auto" role="dialog" aria-modal="true">
+<div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" 
-             onclick="document.getElementById('modal-container').innerHTML = ''"></div>
-
+        <div @click="open = false" class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
         <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full border border-gray-200 dark:border-gray-700">
+        
+        <div class="inline-block align-bottom bg-white dark:bg-gray-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full border border-gray-200 dark:border-gray-700" 
+             x-data="{ tab: 'overview' }">
             
-            <div class="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div class="sm:flex sm:items-start">
-                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+            <div class="bg-gray-50 dark:bg-gray-900 px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
+                    <span class="font-bold text-blue-600 dark:text-blue-400">{{ domain }}</span>
+                </h3>
+                <button @click="open = false" class="text-gray-400 hover:text-gray-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
+            <div class="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                <button @click="tab = 'overview'" :class="{'bg-white dark:bg-gray-800 border-t-2 border-blue-500 text-blue-600 dark:text-blue-400': tab === 'overview'}" class="flex-1 py-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">Overview</button>
+                <button @click="tab = 'php'" :class="{'bg-white dark:bg-gray-800 border-t-2 border-blue-500 text-blue-600 dark:text-blue-400': tab === 'php'}" class="flex-1 py-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">PHP & Settings</button>
+                <button @click="tab = 'database'" :class="{'bg-white dark:bg-gray-800 border-t-2 border-blue-500 text-blue-600 dark:text-blue-400': tab === 'database'}" class="flex-1 py-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">Database</button>
+                <button @click="tab = 'nginx'" :class="{'bg-white dark:bg-gray-800 border-t-2 border-blue-500 text-blue-600 dark:text-blue-400': tab === 'nginx'}" class="flex-1 py-3 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition">Nginx</button>
+            </div>
+
+            <div class="p-6 h-[400px] overflow-y-auto">
+                
+                <div x-show="tab === 'overview'" class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+                            <span class="block text-xs font-bold text-gray-400 uppercase">Site Type</span>
+                            <span class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ site.type }}</span>
+                        </div>
+                        <div class="p-4 bg-gray-50 dark:bg-gray-900 rounded border border-gray-200 dark:border-gray-700">
+                            <span class="block text-xs font-bold text-gray-400 uppercase">SSL Status</span>
+                            <span class="text-sm font-bold {{ 'text-green-600' if site.ssl == 'Enabled' else 'text-red-600' }}">{{ site.ssl }}</span>
+                        </div>
                     </div>
-                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                            Manage {{ domain }}
-                        </h3>
-                        
-                        <div class="mt-4 space-y-4">
-                            <div class="bg-gray-50 dark:bg-gray-700/50 p-3 rounded-md">
-                                <p class="text-sm text-gray-600 dark:text-gray-300">
-                                    <span class="font-bold">Type:</span> {{ site.type }}
-                                </p>
-                                <p class="text-sm text-gray-600 dark:text-gray-300">
-                                    <span class="font-bold">PHP Version:</span> {{ site.php }}
-                                </p>
-                                <p class="text-sm text-gray-600 dark:text-gray-300">
-                                    <span class="font-bold">Created:</span> {{ site.created }}
-                                </p>
-                            </div>
+                    <div>
+                        <span class="block text-xs font-bold text-gray-400 uppercase mb-1">Web Root</span>
+                        <code class="block w-full bg-gray-100 dark:bg-gray-900 p-2 rounded text-xs font-mono select-all">{{ site.root }}</code>
+                    </div>
+                    <div class="flex gap-3 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <a href="/site/{{ domain }}/autologin" target="_blank" class="flex-1 bg-blue-600 text-white text-center py-2.5 rounded text-sm font-bold hover:bg-blue-700 shadow transition">
+                            Open WP Admin
+                        </a>
+                        <button hx-delete="/site/{{ domain }}/delete" hx-target="closest tr" hx-swap="outerHTML" @click="open = false" class="flex-1 bg-white border border-red-200 text-red-600 py-2.5 rounded text-sm font-bold hover:bg-red-50 hover:border-red-400 transition">
+                            Delete Site
+                        </button>
+                    </div>
+                </div>
 
-                            <div class="grid grid-cols-2 gap-3">
-                                <a href="http://{{ domain }}" target="_blank" class="flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700">
-                                    Visit Site
-                                </a>
-                                <a href="/site/{{ domain }}/autologin" target="_blank" class="flex items-center justify-center px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-green-600 hover:bg-green-700">
-                                    WP Admin Login
-                                </a>
-                            </div>
+                <div x-show="tab === 'php'" class="space-y-6">
+                    <div class="flex items-end gap-3 pb-6 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex-1">
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">PHP Version</label>
+                            <form hx-post="/site/{{ domain }}/update-php" hx-target="#php-version-msg" class="flex gap-2">
+                                <select name="version" class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded">
+                                    <option value="8.0" {% if site.php == '8.0' %}selected{% endif %}>PHP 8.0</option>
+                                    <option value="8.1" {% if site.php == '8.1' %}selected{% endif %}>PHP 8.1</option>
+                                    <option value="8.2" {% if site.php == '8.2' %}selected{% endif %}>PHP 8.2</option>
+                                    <option value="8.3" {% if site.php == '8.3' %}selected{% endif %}>PHP 8.3</option>
+                                </select>
+                                <button type="submit" class="bg-gray-800 text-white px-3 py-1.5 rounded text-xs font-bold uppercase">Switch</button>
+                            </form>
+                            <div id="php-version-msg" class="mt-1"></div>
+                        </div>
+                    </div>
 
-                            <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">SSL Status</span>
-                                    <div hx-get="/site/{{ domain }}/check-ssl" hx-trigger="load">
-                                        <span class="text-gray-400 text-xs">Checking...</span>
-                                    </div>
-                                </div>
+                    <form hx-post="/site/{{ domain }}/save-php-settings" hx-target="#php-settings-msg">
+                        <input type="hidden" name="version" value="{{ site.php }}">
+                        <h4 class="text-sm font-bold text-gray-800 dark:text-white mb-3">PHP Configuration</h4>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Memory Limit</label>
+                                <input type="text" name="memory_limit" value="{{ site.php_conf.memory_limit }}" class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Max Execution Time</label>
+                                <input type="text" name="max_execution_time" value="{{ site.php_conf.max_execution_time }}" class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Post Max Size</label>
+                                <input type="text" name="post_max_size" value="{{ site.php_conf.post_max_size }}" class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Upload Max Filesize</label>
+                                <input type="text" name="upload_max_filesize" value="{{ site.php_conf.upload_max_filesize }}" class="w-full text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-700 rounded">
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div id="php-settings-msg" class="text-xs"></div>
+                            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 shadow">
+                                Save & Restart PHP
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div x-show="tab === 'database'" class="space-y-4">
+                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded border border-blue-100 dark:border-blue-800 text-xs text-blue-700 dark:text-blue-300">
+                        These credentials are read directly from your <strong>wp-config.php</strong> file.
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase">Database Name</label>
+                            <input readonly value="{{ site.db.db_name }}" class="w-full mt-1 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-sm font-mono p-2 rounded select-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase">Database User</label>
+                            <input readonly value="{{ site.db.db_user }}" class="w-full mt-1 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-sm font-mono p-2 rounded select-all">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-400 uppercase">Database Password</label>
+                            <div class="relative" x-data="{ show: false }">
+                                <input :type="show ? 'text' : 'password'" readonly value="{{ site.db.db_pass }}" class="w-full mt-1 bg-gray-100 dark:bg-gray-900 border-gray-200 dark:border-gray-700 text-sm font-mono p-2 rounded select-all">
+                                <button @click="show = !show" class="absolute right-2 top-2.5 text-xs font-bold text-blue-500 uppercase">
+                                    <span x-text="show ? 'Hide' : 'Show'"></span>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse justify-between items-center">
-                <button onclick="document.getElementById('modal-container').innerHTML = ''" type="button" class="w-full inline-flex justify-center rounded-md border border-gray-300 dark:border-gray-500 shadow-sm px-4 py-2 bg-white dark:bg-gray-800 text-base font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
-                    Close
-                </button>
-                
-                <button 
-                    hx-delete="/site/{{ domain }}/delete"
-                    hx-confirm="Are you sure? This will delete {{ domain }} and cannot be undone."
-                    hx-target="closest tr"
-                    hx-swap="outerHTML"
-                    onclick="document.getElementById('modal-container').innerHTML = ''"
-                    class="text-red-600 hover:text-red-900 text-sm font-bold">
-                    Delete Site
-                </button>
+
+                <div x-show="tab === 'nginx'">
+                    <p class="text-xs text-gray-500 mb-2">Current configuration file. Read-only view.</p>
+                    <div hx-get="/site/{{ domain }}/nginx-config" hx-trigger="intersect once" class="w-full">
+                        <div class="animate-pulse flex space-x-4">
+                            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>

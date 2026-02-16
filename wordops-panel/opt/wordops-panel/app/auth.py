@@ -13,18 +13,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 1440  # 24 hours
 
 # --- PERSISTENT SECRET KEY ---
 def get_secret_key():
-    # Ensure directory exists
     os.makedirs(os.path.dirname(KEY_FILE), exist_ok=True)
-    
     if os.path.exists(KEY_FILE):
-        with open(KEY_FILE, "r") as f:
-            return f.read().strip()
+        with open(KEY_FILE, "r") as f: return f.read().strip()
     else:
-        # Generate new key and save it
         key = os.urandom(32).hex()
-        with open(KEY_FILE, "w") as f:
-            f.write(key)
-        # Set restricted permissions
+        with open(KEY_FILE, "w") as f: f.write(key)
         os.chmod(KEY_FILE, 0o600)
         return key
 
@@ -34,10 +28,8 @@ SECRET_KEY = get_secret_key()
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 def verify_password(plain_password, hashed_password):
-    try:
-        return pwd_context.verify(plain_password, hashed_password)
-    except:
-        return False
+    try: return pwd_context.verify(plain_password, hashed_password)
+    except: return False
 
 def get_password_hash(password):
     return pwd_context.hash(password)
@@ -53,16 +45,10 @@ def init_user_db():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password_hash TEXT)''')
-    
-    # Create default admin if table is empty
     c.execute("SELECT count(*) FROM users")
     if c.fetchone()[0] == 0:
-        print("Creating default admin user...")
-        # Default: admin / wordops
         admin_pass = get_password_hash("wordops")
         c.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", ("admin", admin_pass))
-        print("Default user 'admin' created with password 'wordops'")
-    
     conn.commit()
     conn.close()
 
@@ -74,13 +60,20 @@ def add_user(username, password):
         c.execute("INSERT INTO users (username, password_hash) VALUES (?, ?)", (username, hashed))
         conn.commit()
         return True
-    except sqlite3.IntegrityError:
-        return False
-    finally:
-        conn.close()
+    except sqlite3.IntegrityError: return False
+    finally: conn.close()
+
+def update_password(username, new_password):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        hashed = get_password_hash(new_password)
+        c.execute("UPDATE users SET password_hash=? WHERE username=?", (hashed, username))
+        conn.commit()
+        return c.rowcount > 0
+    finally: conn.close()
 
 def delete_user(username):
-    # Prevent deleting the last user or 'admin' if you prefer
     if username == "admin": return False 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
